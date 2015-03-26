@@ -1,0 +1,29 @@
+{
+  "name": "kafka-tools",
+  "author": "Rafał Michalski <royal@advertine.com>",
+  "contributors": [],
+  "description": "Nice and easy tools for managing kafka",
+  "version": "0.0.1",
+  "license": "MIT",
+  "homepage": "http://github.com/advertine/kafka-tools",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@bitbucket.org/advertine/kafka-tools.git"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "kafka-topics": "./bin/kafka-topics.js"
+  },
+  "dependencies": {
+    "colors": "*",
+    "async": "*",
+    "numeral": "*",
+    "kafka-node": "0.2.24"
+  }
+}

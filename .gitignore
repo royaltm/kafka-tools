@@ -1,0 +1,17 @@
+.DS_Store
+/.env
+Thumbs.db
+*.tmp
+*~
+*.lnk
+*.sublime-project
+*.sublime-workspace
+sftp-config.json
+/node_modules
+/logs/adv_2*.csv
+/logs/*.log
+/ssl/ssl.key
+/public/css/fmt-*.css
+/vendor_modules
+/tmp
+test-console.log
