@@ -23,8 +23,8 @@ Usage:
 
   # set topic group offset
   # offset will be boundary checked
-  # specify -1 to set earliest possible offset
-  # specify some big number to set latest possible offset
+  # specify 0 to set earliest possible offset
+  # specify negative number to set offset relative to the latest
 
   kafka-topics topic-name group-name offset
 ```

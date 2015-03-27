@@ -198,7 +198,7 @@ function showGroupId(topic, offset, partitions, groupId, mins, maxs) {
 
     if (args.length >= 3) {
       var setTo = parseInt(args[2]);
-      if (! isNaN(setTo))
+      if ( ! isNaN(setTo) )
         return setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, data);
     }
 
@@ -226,6 +226,8 @@ function showGroupId(topic, offset, partitions, groupId, mins, maxs) {
 function setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, curs) {
   var payloads = partitions.map(function(partition) {
     var value = setTo;
+    if (value < 0)
+      value += maxs[topic][partition][0];
     if (value < mins[topic][partition][0])
       value = mins[topic][partition][0];
     if (value > maxs[topic][partition][0])
