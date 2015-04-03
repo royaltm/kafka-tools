@@ -24,6 +24,6 @@
     "colors": "*",
     "async": "*",
     "numeral": "*",
-    "kafka-node": "0.2.24"
+    "kafka-node": "0.2.25"
   }
 }
