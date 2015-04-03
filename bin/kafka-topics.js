@@ -53,7 +53,7 @@ function showBrokersAndExit() {
   client.zk.listBrokers(function(brokers) {
     Object.keys(brokers).forEach(function(no) {
       var brokerInfo = brokers[no]
-      console.log("%d: %s:%s ts: %s ver: %d", no, 
+      console.log("%d" + ":".grey + " %s" + ":".grey + "%s ts" + ":".grey + " %s ver" + ":".grey + " %d", no,
         brokerInfo.host.green, String(brokerInfo.port).magenta,
         new Date(parseInt(brokerInfo.timestamp)).toISOString().cyan,
         brokerInfo.version);
@@ -74,7 +74,7 @@ function showTopicsAndExit() {
       var partitions = Object.keys(topic.partitions);
       var numPartitions = partitions.length
         , replication = topic.partitions[partitions[0]].length
-      console.log("%s (part: %s repl: %s ver: %s)",
+      console.log("%s (part" + ":".grey + " %s repl" + ":".grey + " %s ver" + ":".grey + " %s)",
         pad(topic.name, padlen).yellow, numPartitions, replication, topic.version);
       // for(var partition in topic.partitions) {
       //   console.log("  Partition: %s %s ", partition, topic.partitions[partition].join(','));
@@ -114,6 +114,22 @@ function getPartitions(topic, callback) {
   });
 }
 
+function showTopicConfig(topic, callback) {
+  client.zk.getTopicConfig(topic, function(err, config) {
+
+    assert.ifError(err);
+
+    if ( ! isEmpty(config = config.config) ) {
+      console.log("Config:");
+      for(var name in config) {
+        console.log('  "'.grey + name.magenta + '": "'.grey + config[name].underline + '"'.grey);
+      }
+    }
+
+    callback();
+  });
+}
+
 function showOffsets(topic, offset) {
   getPartitions(topic, function(err, partitions) {
 
@@ -140,13 +156,13 @@ function showOffsets(topic, offset) {
         if (args.length < 2) {
           partitions.forEach(function(partition) {
             var min = data[topic][partition][0], max = data2[topic][partition][0]
-            console.log("Partition %s: %s - %s buf: %s",
+            console.log("Partition %s" + ":".grey + " %s " + "-".grey + " %s " + "buf:".grey + " %s",
               pad(partition, partitions.length < 10 ? 1 : 2),
               thousands(min), thousands(max),
               thousands(max - min).cyan);
           });
 
-          showTopicGroups(topic);
+          showTopicConfig(topic, function() { showTopicGroups(topic) });
 
         } else {
 
@@ -210,7 +226,7 @@ function showGroupId(topic, offset, partitions, groupId, mins, maxs) {
         , lag = max - cur
         , perc = lag / buf
         ;
-      console.log("Partition %s: %s - %s ofs: %s lag: %s%% %s",
+      console.log("Partition %s" + ":".grey + " %s " + "-".grey + " %s " + "ofs:".grey + " %s " + "lag:".grey + " %s%% %s",
         pad(partition, partitions.length < 10 ? 1 : 2),
         thousands(min), thousands(max),
         thousands(cur).magenta,
@@ -243,7 +259,7 @@ function setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, curs)
         , max = maxs[topic][partition][0]
         , cur = curs[topic][partition]
         ;
-      console.log("Partition %s: %s - %s ofs: %s -> %s",
+      console.log("Partition %s" + ":".grey + " %s " + "-".grey + " %s " + "ofs:".grey + " %s " + "->".grey + " %s",
         pad(partition, partitions.length < 10 ? 1 : 2),
         thousands(min), thousands(max),
         thousands(cur).magenta,
@@ -253,4 +269,10 @@ function setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, curs)
     process.exit();
   });
 
+}
+
+function isEmpty(object) {
+  if ("string" === typeof object) return !object;
+  for(var i in object) return false;
+  return true;
 }
