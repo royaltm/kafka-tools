@@ -43,8 +43,9 @@ console.log('Kafka: ' + connectionString.green);
 
 function showUsageAndExit() {
   console.log("Usage:");
-  console.log("  kafka-topics topic-name [[group-id] offset]")
+  console.log("  kafka-topics topic-name [[group-id] offset [offset2 ...]]")
   console.log("               offset - set offset to (boundaries are checked)");
+  console.log("               multiple offset will be cycled for each partition in topic");
   showBrokersAndExit();
 }
 
@@ -211,11 +212,17 @@ function showGroupId(topic, offset, partitions, groupId, mins, maxs) {
     assert.ifError(err);
 
     console.log("Group ID: " + groupId.cyan);
-
+    var setTo;
     if (args.length >= 3) {
-      var setTo = parseInt(args[2]);
-      if ( ! isNaN(setTo) )
-        return setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, data);
+      if (args.length > 3) {
+        setTo = args.slice(2).map(function(i){return parseInt(i)});
+        if (!setTo.some(isNaN))
+          return setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, data);
+      } else {
+        setTo = parseInt(args[2]);
+        if ( ! isNaN(setTo) )
+          return setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, data);
+      }
     }
 
     partitions.forEach(function(partition) {
@@ -240,8 +247,8 @@ function showGroupId(topic, offset, partitions, groupId, mins, maxs) {
 }
 
 function setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, curs) {
-  var payloads = partitions.map(function(partition) {
-    var value = setTo;
+  var payloads = partitions.map(function(partition, index) {
+    var value = Array.isArray(setTo) ? setTo[index % setTo.length] : setTo;
     if (value < 0)
       value += maxs[topic][partition][0];
     if (value < mins[topic][partition][0])
