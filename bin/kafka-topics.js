@@ -45,7 +45,7 @@ function showUsageAndExit() {
   console.log("Usage:");
   console.log("  kafka-topics topic-name [[group-id] offset [offset2 ...]]")
   console.log("               offset - set offset to (boundaries are checked)");
-  console.log("               multiple offset will be cycled for each partition in topic");
+  console.log("               multiple offsets will be cycled for each partition in topic");
   showBrokersAndExit();
 }
 
