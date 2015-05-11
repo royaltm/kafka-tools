@@ -28,3 +28,13 @@ Usage:
 
   kafka-topics topic-name group-name offset
 ```
+
+Tips
+----
+
+```
+# clear topic
+bin/kafka-topics.sh --alter --zookeeper kafka.advertine.com:2181/kafka081 --topic TOPIC_NAME --config retention.ms=1
+# wait about 5 minutes
+bin/kafka-topics.sh --alter --zookeeper kafka.advertine.com:2181/kafka081 --topic TOPIC_NAME --deleteConfig retention.ms
+```
