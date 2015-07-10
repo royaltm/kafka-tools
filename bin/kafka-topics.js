@@ -68,15 +68,15 @@ function showTopicsAndExit() {
   client.zk.listTopics(function(err, topics) {
     assert.ifError(err);
     
-    console.log("Topics:");
+    console.log("Topics:\n" + "part repl ver name".grey);
     var padlen = topics.reduce(function(max, topic) {
       return topic.name.length > max ? topic.name.length : max}, 0);
     topics.forEach(function(topic) {
       var partitions = Object.keys(topic.partitions);
       var numPartitions = partitions.length
         , replication = topic.partitions[partitions[0]].length
-      console.log(" prt" + ":".grey + " %s rpl" + ":".grey + " %s ver" + ":".grey + " %s %s",
-        numPartitions, replication, topic.version, String(topic.name || '').yellow);
+      console.log("%s %s %s %s",
+        pad(numPartitions, 4), pad(replication, 4), pad(topic.version, 3), String(topic.name || '').yellow);
       // for(var partition in topic.partitions) {
       //   console.log("  Partition: %s %s ", partition, topic.partitions[partition].join(','));
       // };
