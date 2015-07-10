@@ -75,8 +75,8 @@ function showTopicsAndExit() {
       var partitions = Object.keys(topic.partitions);
       var numPartitions = partitions.length
         , replication = topic.partitions[partitions[0]].length
-      console.log("%s (part" + ":".grey + " %s repl" + ":".grey + " %s ver" + ":".grey + " %s)",
-        pad(topic.name, padlen).yellow, numPartitions, replication, topic.version);
+      console.log(" prt" + ":".grey + " %s rpl" + ":".grey + " %s ver" + ":".grey + " %s %s",
+        numPartitions, replication, topic.version, String(topic.name || '').yellow);
       // for(var partition in topic.partitions) {
       //   console.log("  Partition: %s %s ", partition, topic.partitions[partition].join(','));
       // };
