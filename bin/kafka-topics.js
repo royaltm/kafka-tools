@@ -169,9 +169,11 @@ function showOffsets(topic, offset) {
 
           if (args[1] === '--delete') {
             console.log('Attempting to delete topic....'.red);
-            client.zk.deleteTopics([topic], function(err, stat) {
+            client.zk.deleteTopics([topic], function(err, topics) {
               assert.ifError(err);
               console.log('No errors, but will it work?'.grey);
+              console.log(topics);
+              process.exit();
             });
           } else {
 
