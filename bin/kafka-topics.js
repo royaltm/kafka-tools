@@ -17,8 +17,8 @@ var kafka_tools = require('../index.js')
   , pad       = kafka_tools.pad;
 var kafka = require('kafka-node');
 
-var connectionString = process.env.ADVERTINE_KAFKA_SERVER || 'kafka.advertine.com:2181/kafka081';
-var clientId = 'advertine-kafka-topics';
+var connectionString = process.env.KAFKA_TOOLS_ZOOKEEPER || 'localhost:2181/';
+var clientId = 'kafka-topics';
 var clientOptions = {
                       sessionTimeout: 5000,
                       spinDelay : 500,

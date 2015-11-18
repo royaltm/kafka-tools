@@ -9,6 +9,8 @@ npm install -g advertine/kafka-tools
 Usage:
 
 ```
+  export KAFKA_TOOLS_ZOOKEEPER="your.zookeeper.address/path-to-kafka"
+
   # list brokers and topics
 
   kafka-topics
@@ -34,7 +36,7 @@ Tips
 
 ```
 # clear topic
-bin/kafka-topics.sh --alter --zookeeper kafka.advertine.com:2181/kafka081 --topic TOPIC_NAME --config retention.ms=1
+bin/kafka-topics.sh --alter --zookeeper your.zookeeper.address/path-to-kafka --topic TOPIC_NAME --config retention.ms=1
 # wait about 5 minutes
-bin/kafka-topics.sh --alter --zookeeper kafka.advertine.com:2181/kafka081 --topic TOPIC_NAME --deleteConfig retention.ms
+bin/kafka-topics.sh --alter --zookeeper your.zookeeper.address/path-to-kafka --topic TOPIC_NAME --deleteConfig retention.ms
 ```
