@@ -11,6 +11,7 @@
 */
 require('colors');
 var assert = require('assert');
+var os = require('os');
 var numeral = require('numeral');
 var kafka_tools = require('../index.js')
   , logconfig = kafka_tools.logconfig
@@ -45,20 +46,32 @@ var args = process.argv.slice(2);
 console.log('Kafka: ' + connectionString.green);
 
 function showUsageAndExit() {
-  console.log("Usage:");
-  console.log("  kafka-topics");
-  console.log("               lists topics");
-  console.log("");
-  console.log("  kafka-topics topic-name [[group-id] offset [offset2 ...]]")
-  console.log("               offset - set offset to (boundaries are checked)");
-  console.log("               multiple offsets will be cycled for each partition in topic");
-  console.log("");
-  console.log("  kafka-topics topic-name -c config.to.override=value config.to.delete=");
-  console.log("               overrides or deletetes config overrides for topic");
-  console.log("");
-  console.log("  kafka-topics topic-name --delete");
-  console.log("               deletes topic");
-  console.log("               (delete.topic.enable must be \"true\" on kafka server)");
+  console.log([
+    "Usage:",
+    "  kafka-topics",
+    "               lists topics",
+    "",
+    "  kafka-topics topic-name group-id",
+    "               lists topic partition offsets and group offsets",
+    "",
+    "  kafka-topics topic-name group-id offset [offset2 ...]",
+    "               offset - sets offset to (boundaries are checked)",
+    "               multiple offsets will be cycled for each partition in topic",
+    "",
+    "  kafka-topics -c",
+    "               list possible configuration overrides with descriptions",
+    "",
+    "  kafka-topics topic-name -c config.to.override=value config.to.delete=",
+    "               overrides or removes config overrides for topic",
+    "",
+    "  kafka-topics topic-name --delete",
+    "               deletes topic",
+    "               (delete.topic.enable must be \"true\" on kafka server)",
+    "",
+    "  kafka-topics topic-name --clear",
+    "               clears topic, may take a while",
+    "important".red + ": " + "do not write messages or modify topic configuration override while the topic is being cleared".underline
+  ].join(os.EOL));
   process.exit();
 }
 
@@ -104,8 +117,12 @@ if (args.length < 1) {
 
 } else {
 
-  if (args[0] && args[0].match(/^-h(?:elp)?$|^--h(?:elp)?$|^help$/i))
+  if (args[0] && args[0].match(/^-h(?:elp)?$|^--h(?:elp)?$|^help$/i)) {
     return showUsageAndExit();
+  } else if (args[0] && args[0].match(/^-c$|^--config$/)) {
+    logconfig.list();
+    process.exit();
+  }
 
   var topic = args[0];
 
@@ -350,7 +367,9 @@ function clearTopic(topic, offset) {
     current = current && current.config || {};
 
     var oldRetentionMs = current['retention.ms'];
+    var oldCleanupPolicy = current['cleanup.policy']
     current['retention.ms'] = '1';
+    current['cleanup.policy'] = 'delete';
 
     process.stdout.write("Clear in progress ..");
 
@@ -361,6 +380,11 @@ function clearTopic(topic, offset) {
         current['retention.ms'] = oldRetentionMs;
       } else {
         delete current['retention.ms'];
+      }
+      if (oldCleanupPolicy) {
+        current['cleanup.policy'] = oldCleanupPolicy;
+      } else {
+        delete current['cleanup.policy'];
       }
       waitBufferCleared(topic, offset, function() {
         console.log("Done.");
@@ -401,6 +425,9 @@ function configFormatted(name, value) {
 var propertyAssignmentPattern = /^([a-z][a-z.]+)=(.*)$/;
 
 function parseConfArgs(args) {
+  if (!Array.isArray(args))
+    return;
+
   var config = {};
   args.forEach(function(arg) {
     var match = arg.match(propertyAssignmentPattern);
