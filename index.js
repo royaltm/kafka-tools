@@ -2,6 +2,8 @@ var numeral = require("numeral");
 
 exports.Zookeeper = require('./lib/zookeeper');
 
+exports.logconfig = require('./lib/logconfig');
+
 exports.thousands = thousands;
 exports.pad = pad;
 

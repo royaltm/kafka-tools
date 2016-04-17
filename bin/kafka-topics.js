@@ -13,9 +13,12 @@ require('colors');
 var assert = require('assert');
 var numeral = require('numeral');
 var kafka_tools = require('../index.js')
+  , logconfig = kafka_tools.logconfig
   , thousands = kafka_tools.thousands
-  , pad       = kafka_tools.pad;
+  , pad       = kafka_tools.pad
+
 var kafka = require('kafka-node');
+
 
 var connectionString = process.env.KAFKA_TOOLS_ZOOKEEPER || 'localhost:2181/';
 var clientId = 'kafka-topics';
@@ -43,10 +46,20 @@ console.log('Kafka: ' + connectionString.green);
 
 function showUsageAndExit() {
   console.log("Usage:");
+  console.log("  kafka-topics");
+  console.log("               lists topics");
+  console.log("");
   console.log("  kafka-topics topic-name [[group-id] offset [offset2 ...]]")
   console.log("               offset - set offset to (boundaries are checked)");
   console.log("               multiple offsets will be cycled for each partition in topic");
-  showBrokersAndExit();
+  console.log("");
+  console.log("  kafka-topics topic-name -c config.to.override=value config.to.delete=");
+  console.log("               overrides or deletetes config overrides for topic");
+  console.log("");
+  console.log("  kafka-topics topic-name --delete");
+  console.log("               deletes topic");
+  console.log("               (delete.topic.enable must be \"true\" on kafka server)");
+  process.exit();
 }
 
 function showBrokersAndExit() {
@@ -87,9 +100,12 @@ function showTopicsAndExit() {
 
 if (args.length < 1) {
 
-  showUsageAndExit();
+  showBrokersAndExit();
 
 } else {
+
+  if (args[0] && args[0].match(/^-h(?:elp)?$|^--h(?:elp)?$|^help$/i))
+    return showUsageAndExit();
 
   var topic = args[0];
 
@@ -123,7 +139,7 @@ function showTopicConfig(topic, callback) {
     if ( ! isEmpty(config = config.config) ) {
       console.log("Config:");
       for(var name in config) {
-        console.log('  "'.grey + name.magenta + '": "'.grey + config[name].underline + '"'.grey);
+        console.log('  %s', configFormatted(name, config[name]));
       }
     }
 
@@ -131,9 +147,8 @@ function showTopicConfig(topic, callback) {
   });
 }
 
-function showOffsets(topic, offset) {
+function getOffsets(topic, offset, next) {
   getPartitions(topic, function(err, partitions) {
-
     assert.ifError(err);
 
     var payloads = partitions.map(function(partition) {
@@ -141,7 +156,6 @@ function showOffsets(topic, offset) {
     });
 
     offset.fetch(payloads, function (err, data) {
-
       assert.ifError(err);
 
       payloads.forEach(function(payload) {
@@ -149,41 +163,53 @@ function showOffsets(topic, offset) {
       });
 
       offset.fetch(payloads, function (err, data2) {
-
         assert.ifError(err);
 
-        console.log("Topic: " + topic.yellow);
-
-        if (args.length < 2) {
-          partitions.forEach(function(partition) {
-            var min = data[topic][partition][0], max = data2[topic][partition][0]
-            console.log("Partition %s" + ":".grey + " %s " + "-".grey + " %s " + "buf:".grey + " %s",
-              pad(partition, partitions.length < 10 ? 1 : 2),
-              thousands(min), thousands(max),
-              thousands(max - min).cyan);
-          });
-
-          showTopicConfig(topic, function() { showTopicGroups(topic) });
-
-        } else {
-
-          if (args[1] === '--delete') {
-            console.log('Attempting to delete topic....'.red);
-            client.zk.deleteTopics([topic], function(err, topics) {
-              assert.ifError(err);
-              console.log('No errors, but will it work?'.grey);
-              console.log(topics);
-              process.exit();
-            });
-          } else {
-
-            showGroupId(topic, offset, partitions, args[1], data, data2);
-
-          }
-
-        }
+        next(topic, offset, partitions, data, data2);
       });
     });
+  });
+}
+
+function showOffsets(topic, offset) {
+  getOffsets(topic, offset, function(topic, offset, partitions, data, data2) {
+    console.log("Topic: " + topic.yellow);
+
+    if (args.length < 2) {
+      partitions.forEach(function(partition) {
+        var min = data[topic][partition][0], max = data2[topic][partition][0]
+        console.log("Partition %s" + ":".grey + " %s " + "-".grey + " %s " + "buf:".grey + " %s",
+          pad(partition, partitions.length < 10 ? 1 : 2),
+          thousands(min), thousands(max),
+          thousands(max - min).cyan);
+      });
+
+      showTopicConfig(topic, function() { showTopicGroups(topic) });
+
+    } else {
+
+      if (args[1] === '--delete') {
+        console.log('Attempting to delete topic....'.red);
+        client.zk.deleteTopics([topic], function(err, topics) {
+          assert.ifError(err);
+          console.log('No errors, but will it work?'.grey);
+          console.log(topics);
+          process.exit();
+        });
+      } else if (args[1] === '--clear') {
+
+        clearTopic(topic, offset);
+      } else if (args[1] === '-c' || args[1] === '--config') {
+
+        configureTopic(topic, args.slice(2));
+
+      } else {
+
+        showGroupId(topic, offset, partitions, args[1], data, data2);
+
+      }
+
+    }
   });
 }
 
@@ -279,6 +305,114 @@ function setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, curs)
   });
 
 }
+
+function configureTopic(topic, confargs) {
+  var configs = parseConfArgs(confargs);
+
+  if (isEmpty(configs)) {
+    logconfig.list();
+    process.exit();
+  }
+
+  client.zk.getTopicConfig(topic, function(err, current) {
+
+    assert.ifError(err);
+
+    current = current && current.config || {};
+
+    console.log("Config:")
+
+    for(var name in configs) {
+      var value = configs[name];
+      if (value == null) {
+        console.log("  removing %s", name.red);
+        delete current[name];
+      } else {
+        console.log("  override %s", configFormatted(name, value));
+        current[name] = value;
+      }
+    }
+
+    client.zk.changeTopicConfig(topic, current, function(err) {
+
+      assert.ifError(err);
+
+      process.exit();
+    });
+  });
+
+}
+
+function clearTopic(topic, offset) {
+  client.zk.getTopicConfig(topic, function(err, current) {
+    assert.ifError(err);
+
+    current = current && current.config || {};
+
+    var oldRetentionMs = current['retention.ms'];
+    current['retention.ms'] = '1';
+
+    process.stdout.write("Clear in progress ..");
+
+    client.zk.changeTopicConfig(topic, current, function(err) {
+      assert.ifError(err);
+
+      if (oldRetentionMs) {
+        current['retention.ms'] = oldRetentionMs;
+      } else {
+        delete current['retention.ms'];
+      }
+      waitBufferCleared(topic, offset, function() {
+        console.log("Done.");
+        client.zk.changeTopicConfig(topic, current, function(err) {
+          assert.ifError(err);
+          process.exit();
+        });
+      });
+
+    });
+  });
+
+}
+
+function waitBufferCleared(topic, offset, next) {
+  setTimeout(function() {
+
+    process.stdout.write('.');
+
+    getOffsets(topic, offset, function(topic, offset, partitions, data, data2) {
+      if (partitions.every(function(partition) {
+        var min = data[topic][partition][0], max = data2[topic][partition][0]
+        return max - min <= 0;
+      })) {
+        console.log("");
+        next(topic, offset);
+      } else {
+        waitBufferCleared(topic, offset, next);
+      }
+    });
+  }, 2000);
+}
+
+function configFormatted(name, value) {
+  return '"'.grey + name.magenta + '": "'.grey + value.underline + '"'.grey;
+}
+
+var propertyAssignmentPattern = /^([a-z][a-z.]+)=(.*)$/;
+
+function parseConfArgs(args) {
+  var config = {};
+  args.forEach(function(arg) {
+    var match = arg.match(propertyAssignmentPattern);
+    if (match) {
+      var value = match[2].trim();
+      config[match[1]] = value ? value : null;
+    } else {
+      return;
+    }
+  });
+  return config;
+};
 
 function isEmpty(object) {
   if ("string" === typeof object) return !object;

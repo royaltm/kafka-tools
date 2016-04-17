@@ -1,14 +1,17 @@
 {
   "name": "kafka-tools",
-  "author": "Rafał Michalski <royal@advertine.com>",
+  "author": "Rafał Michalski <royal@yeondir.com>",
   "contributors": [],
   "description": "Nice and easy tools for managing kafka",
   "version": "0.0.3",
   "license": "MIT",
-  "homepage": "http://github.com/advertine/kafka-tools",
+  "homepage": "http://github.com/royaltm/kafka-tools",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@bitbucket.org/advertine/kafka-tools.git"
+    "url": "git+ssh://git@bitbucket.org/royaltm/kafka-tools.git"
+  },
+  "engines": {
+    "node": ">=0.12"
   },
   "files": [
     "bin",
@@ -24,6 +27,7 @@
     "colors": "*",
     "async": "*",
     "numeral": "*",
-    "kafka-node": "0.2.25"
+    "kafka-node": "0.3.2",
+    "node-zookeeper-client": "~0.2.2"
   }
 }
