@@ -13,6 +13,9 @@
   "engines": {
     "node": ">=0.12"
   },
+  "scripts": {
+    "test": "tap tests/test.*.js"
+  },
   "files": [
     "bin",
     "lib",
@@ -29,5 +32,8 @@
     "numeral": "*",
     "kafka-node": "0.3.2",
     "node-zookeeper-client": "~0.2.2"
+  },
+  "devDependencies": {
+    "tap": "^5.7.1"
   }
 }
