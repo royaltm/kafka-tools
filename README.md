@@ -87,7 +87,9 @@ This module is based on [kafka-node](https://www.npmjs.com/package/kafka-node) a
 It simply extends [kafka-node/lib/zookeeper](https://github.com/SOHU-Co/kafka-node/blob/master/lib/zookeeper.js) `Zookeeper` object so it's possible to use it in your own programs:
 
 ```
-  var kafka = require('kafka-tools').kafka; // monkey patches kafka-node's zookeeper module
+  // monkey patches kafka-node's zookeeper module
+  var kafka = require('kafka-tools').kafka;
+
   var client = new kafka.Client(connectionString, clientId, clientOptions);
 
   // now you have access to extended zk api
@@ -99,3 +101,5 @@ It simply extends [kafka-node/lib/zookeeper](https://github.com/SOHU-Co/kafka-no
   client.zk.createTopic(topic, numPartitions, replicationFactor, configs, callback);
   client.zk.deleteTopics(topics, callback);
 ```
+
+The extended functions are based on [this specification](https://cwiki.apache.org/confluence/display/KAFKA/Kafka+data+structures+in+Zookeeper) as well as `scala/kafka/admin/AdminUtils.scala` sources of Apache Kafka.
