@@ -23,17 +23,17 @@ Usage
     kafka-topics
 
 
-### List topic partition offsets and group ids
+### List topic partition offsets and group ids (zookeeper based)
 
 
     kafka-topics topic-name
 
 
-### List topic partition offsets and current group offsets
+### List topic partition offsets and current group offsets (zookeeper based)
 
     kafka-topics topic-name group-name
 
-### Set topic group offsets
+### Set topic group offsets (zookeeper based)
 
     kafka-topics topic-name group-name offset [offset2 [offset3 [...]]]
 
