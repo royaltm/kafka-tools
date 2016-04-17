@@ -17,9 +17,7 @@ var kafka_tools = require('../index.js')
   , logconfig = kafka_tools.logconfig
   , thousands = kafka_tools.thousands
   , pad       = kafka_tools.pad
-
-var kafka = require('kafka-node');
-
+  , kafka     = kafka_tools.kafka
 
 var connectionString = process.env.KAFKA_TOOLS_ZOOKEEPER || 'localhost:2181/';
 var clientId = 'kafka-topics';

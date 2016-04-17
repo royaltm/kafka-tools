@@ -78,3 +78,24 @@ Example:
 
     kafka-topics --help
     kafka-topics -h
+
+
+Library
+-------
+
+This module is based on [kafka-node](https://www.npmjs.com/package/kafka-node) and [node-zookeeper-client](https://www.npmjs.com/package/node-zookeeper-client).
+It simply extends [kafka-node/lib/zookeeper](https://github.com/SOHU-Co/kafka-node/blob/master/lib/zookeeper.js) `Zookeeper` object so it's possible to use it in your own programs:
+
+```
+  var kafka = require('kafka-tools').kafka; // monkey patches kafka-node's zookeeper module
+  var client = new kafka.Client(connectionString, clientId, clientOptions);
+
+  // now you have access to extended zk api
+
+  client.zk.listTopics(callback);
+  client.zk.listGroupsPerTopic(topic, callback);
+  client.zk.getTopicConfig(topic, callback);
+  client.zk.changeTopicConfig(topic, configs, callback);
+  client.zk.createTopic(topic, numPartitions, replicationFactor, configs, callback);
+  client.zk.deleteTopics(topics, callback);
+```

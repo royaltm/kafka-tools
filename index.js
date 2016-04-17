@@ -48,3 +48,4 @@ exports.Topic = {
 exports.logconfig = require('./lib/logconfig');
 exports.Config = require('./lib/config');
 exports.Zookeeper = require('./lib/zookeeper');
+exports.kafka = require('kafka-node');
