@@ -10,7 +10,7 @@ Prerequisites
 Installation
 ------------
 
-    npm install -g royaltm/kafka-tools
+    npm install -g kafka-tools
 
 
 Usage
