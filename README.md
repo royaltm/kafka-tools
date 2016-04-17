@@ -29,11 +29,11 @@ Usage
     kafka-topics topic-name
 
 
-### List topic partition offset and current group offset
+### List topic partition offsets and current group offsets
 
     kafka-topics topic-name group-name
 
-### Set topic group offset
+### Set topic group offsets
 
 - offsets will be boundary checked
 - specify 0 to set earliest possible offset
@@ -57,7 +57,7 @@ Usage
 
 ### Clear topic
 
-This overrides `retention.ms=1` and `cleanup.policy=delete`, waits until the topic is sweeped and restores original configuration overrides for topic.
+This overrides `retention.ms=1` and `cleanup.policy=delete`, waits until the topic is sweeped and restores original configuration overrides for a topic.
 
     kafka-topics topic-name --clear
 
