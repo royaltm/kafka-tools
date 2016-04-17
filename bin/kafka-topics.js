@@ -39,15 +39,26 @@ numeral.language('pl', {
 // switch between languages
 numeral.language('pl');
 
+var propertyAssignmentPattern = /^([a-z][a-z\.]+)\=(.*)$/;
+
 var client = new kafka.Client(connectionString, clientId, clientOptions);
 
 var args = process.argv.slice(2);
 
 console.log('Kafka: ' + connectionString.green);
 
+function showVersionAndExit() {
+  var pkg = require("../package.json");
+  console.log("kafka-topics: v%s", pkg.version);
+  process.exit();
+}
+
 function showUsageAndExit() {
   console.log([
     "Usage:",
+    "  kafka-topics -v|--version",
+    "               display program version",
+    "",
     "  kafka-topics",
     "               lists topics",
     "",
@@ -58,10 +69,16 @@ function showUsageAndExit() {
     "               offset - sets offset to (boundaries are checked)",
     "               multiple offsets will be cycled for each partition in topic",
     "",
-    "  kafka-topics -c",
+    "  kafka-topics --create topic-name p<numPartitions> r<numReplicas> \\",
+    "                                   [config.to.override=value ...]",
+    "               create topic with topic-name and numPartitions partitions",
+    "               and numReplicas replication factor",
+    "               and possible config overrides",
+    "",
+    "  kafka-topics -c|--config",
     "               list possible configuration overrides with descriptions",
     "",
-    "  kafka-topics topic-name -c config.to.override=value config.to.delete=",
+    "  kafka-topics topic-name -c|--config config.to.override=value config.to.delete=",
     "               overrides or removes config overrides for topic",
     "",
     "  kafka-topics topic-name --delete",
@@ -117,11 +134,23 @@ if (args.length < 1) {
 
 } else {
 
-  if (args[0] && args[0].match(/^-h(?:elp)?$|^--h(?:elp)?$|^help$/i)) {
+  if (args[0] && args[0].match(/^-?-v(?:ersion)?$/i)) {
+
+    return showVersionAndExit();
+
+  } else if (args[0] && args[0].match(/^-?-h(?:elp)?$/i)) {
+
     return showUsageAndExit();
+
   } else if (args[0] && args[0].match(/^-c$|^--config$/)) {
+
     logconfig.list();
     process.exit();
+
+  } else if (args[0] === '--create') {
+
+    return createTopicAndExit(args.slice(1));
+
   }
 
   var topic = args[0];
@@ -196,7 +225,7 @@ function showOffsets(topic, offset) {
       partitions.forEach(function(partition) {
         var min = data[topic][partition][0], max = data2[topic][partition][0]
         console.log("Partition %s" + ":".grey + " %s " + "-".grey + " %s " + "buf:".grey + " %s",
-          pad(partition, partitions.length < 10 ? 1 : 2),
+          pad(partition, String(partitions.length - 1).length),
           thousands(min), thousands(max),
           thousands(max - min).cyan);
       });
@@ -210,12 +239,12 @@ function showOffsets(topic, offset) {
         client.zk.deleteTopics([topic], function(err, topics) {
           assert.ifError(err);
           console.log('No errors, but will it work?'.grey);
-          console.log(topics);
           process.exit();
         });
       } else if (args[1] === '--clear') {
 
         clearTopic(topic, offset);
+
       } else if (args[1] === '-c' || args[1] === '--config') {
 
         configureTopic(topic, args.slice(2));
@@ -279,7 +308,7 @@ function showGroupId(topic, offset, partitions, groupId, mins, maxs) {
         , perc = lag / buf
         ;
       console.log("Partition %s" + ":".grey + " %s " + "-".grey + " %s " + "ofs:".grey + " %s " + "lag:".grey + " %s%% %s",
-        pad(partition, partitions.length < 10 ? 1 : 2),
+        pad(partition, String(partitions.length - 1).length),
         thousands(min), thousands(max),
         thousands(cur).magenta,
         pad((perc*100).toFixed(0), 3),
@@ -312,7 +341,7 @@ function setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, curs)
         , cur = curs[topic][partition]
         ;
       console.log("Partition %s" + ":".grey + " %s " + "-".grey + " %s " + "ofs:".grey + " %s " + "->".grey + " %s",
-        pad(partition, partitions.length < 10 ? 1 : 2),
+        pad(partition, String(partitions.length - 1).length),
         thousands(min), thousands(max),
         thousands(cur).magenta,
         thousands(payloads[partition|0].offset).green);
@@ -418,26 +447,64 @@ function waitBufferCleared(topic, offset, next) {
   }, 2000);
 }
 
+function createTopicAndExit(createargs) {
+  if (createargs.length < 3)
+    return showUsageAndExit();
+
+  var topic = createargs[0];
+
+  var numPartitions = createargs[1];
+  var replicationFactor = createargs[2];
+
+  if (numPartitions.charAt(0) !== 'p' || replicationFactor.charAt(0) !== 'r')
+    return showUsageAndExit();
+
+  numPartitions = parseInt(numPartitions.substr(1));
+  replicationFactor = parseInt(replicationFactor.substr(1));
+
+  console.log("Topic: " + topic.yellow);
+
+  configs = parseConfArgs(createargs.slice(3));
+
+  client.zk.createTopic(topic, numPartitions, replicationFactor, configs, function(err, replicaAssignment) {
+    if (err) {
+      console.log(err.toString().red);
+      process.exit(1);
+    }
+    console.log("Created with:")
+    replicaAssignment.forEach(function(repl, partitionId) {
+      console.log("  Partition %s" + ":".grey + " on brokers %s ",
+          pad(partitionId, String(numPartitions - 1).length),
+          repl.join());
+    });
+    if (!isEmpty(configs)) {
+      console.log("  Config:");
+      for(var name in configs) {
+        console.log('    %s', configFormatted(name, configs[name]));
+      }
+    }
+    process.exit();
+  });
+}
+
 function configFormatted(name, value) {
   return '"'.grey + name.magenta + '": "'.grey + value.underline + '"'.grey;
 }
 
-var propertyAssignmentPattern = /^([a-z][a-z.]+)=(.*)$/;
-
 function parseConfArgs(args) {
-  if (!Array.isArray(args))
-    return;
-
   var config = {};
-  args.forEach(function(arg) {
-    var match = arg.match(propertyAssignmentPattern);
-    if (match) {
-      var value = match[2].trim();
-      config[match[1]] = value ? value : null;
-    } else {
-      return;
-    }
-  });
+
+  if (Array.isArray(args)) {
+    args.forEach(function(arg) {
+      var match = arg.match(propertyAssignmentPattern);
+      if (match) {
+        var value = match[2].trim();
+        config[match[1]] = value ? value : null;
+      } else {
+        return;
+      }
+    });
+  }
   return config;
 };
 

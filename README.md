@@ -65,3 +65,16 @@ This overrides `retention.ms=1` and `cleanup.policy=delete`, waits until the top
 For this to work `delete.topic.enable` server config option must be `true`.
 
     kafka-topics topic-name --delete
+
+### Create topic
+
+    kafka-topics --create topic-name p<numPartitions> r<numReplicas> [config.to.override=value ...]
+
+Example:
+
+    kafka-topics --create some-important-topic p128 r3 retention.ms=31536000000
+
+### Display help
+
+    kafka-topics --help
+    kafka-topics -h
