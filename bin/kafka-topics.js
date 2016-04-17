@@ -2,7 +2,7 @@
 /*
  * TOOL kafka topic helper
  *
- * Author: Rafal Michalski (c) 2015
+ * Author: Rafal Michalski (c) 2015-2016
  *
  * Usage:
  *
