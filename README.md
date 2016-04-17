@@ -35,13 +35,12 @@ Usage
 
 ### Set topic group offsets
 
+    kafka-topics topic-name group-name offset [offset2 [offset3 [...]]]
+
 - offsets will be boundary checked
 - specify 0 to set earliest possible offset
 - specify negative number to set offset relative to the latest partition offset
 - multiple offsets will be cycled for each partition in topic
-
-
-    kafka-topics topic-name group-name offset [offset2 [offset3 [...]]]
 
 ### Show all possible configuration overrides (hardcoded)
 
