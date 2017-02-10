@@ -27,12 +27,12 @@
     "kafka-topics": "./bin/kafka-topics.js"
   },
   "dependencies": {
-    "async": "*",
-    "colors": "*",
+    "async": "^1.5.2",
+    "colors": "^1.1.2",
     "debug": "^2.2.0",
-    "kafka-node": "0.3.2",
+    "kafka-node": "~0.3.3",
     "node-zookeeper-client": "~0.2.2",
-    "numeral": "*"
+    "numeral": "^1.5.6"
   },
   "devDependencies": {
     "tap": "^5.7.1"
