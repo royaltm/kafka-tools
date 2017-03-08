@@ -104,7 +104,7 @@ It simply extends [kafka-node/lib/zookeeper](https://github.com/SOHU-Co/kafka-no
   client.zk.listTopics(callback);
   client.zk.listGroupsPerTopic(topic, callback);
   client.zk.getTopicConfig(topic, callback);
-  client.zk.changeTopicConfig2(topic, configs, callback);
+  client.zk.changeTopicConfigV2(topic, configs, callback);
   client.zk.changeTopicConfig(topic, configs[, notifyV2], callback);
   client.zk.getClientConfig(clientId, callback);
   client.zk.changeClientIdConfig(clientId, configs, callback);
