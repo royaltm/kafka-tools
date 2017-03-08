@@ -253,10 +253,10 @@ function showOffsets(topic, offset) {
     } else {
 
       if (args[1] === '--delete') {
-        console.log('Attempting to delete topic....'.red);
+        console.log('Attempting to delete a topic....'.red);
         client.zk.deleteTopics([topic], function(err, topics) {
           assert.ifError(err);
-          console.log('No errors, but will it work?'.grey);
+          console.log('No errors, but for this to work delete.topic.enable must be \"true\" on the kafka server'.grey);
           process.exit();
         });
       } else if (args[1] === '--clear') {
