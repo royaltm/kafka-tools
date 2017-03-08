@@ -20,8 +20,17 @@ var kafka_tools = require('../index.js')
   , kafka     = kafka_tools.kafka
 
 var connectionString = process.env.KAFKA_TOOLS_ZOOKEEPER || 'localhost:2181/';
+var sslOptions       = process.env.KAFKA_TOOLS_SSL;
+
+if ('string' === typeof sslOptions) {
+  sslOptions = JSON.parse(sslOptions);
+}
+else {
+  sslOptions = undefined;
+}
+
 var clientId = 'kafka-topics';
-var clientOptions = {
+var zkClientOptions = {
                       sessionTimeout: 5000,
                       spinDelay : 500,
                       retries : 0
@@ -39,7 +48,7 @@ numeral.language('pl');
 
 var propertyAssignmentPattern = /^([a-z][a-z\.]+)\=(.*)$/;
 
-var client = new kafka.Client(connectionString, clientId, clientOptions);
+var client = new kafka.Client(connectionString, clientId, zkClientOptions, undefined, sslOptions);
 
 var args = process.argv.slice(2);
 

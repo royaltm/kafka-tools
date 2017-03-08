@@ -20,6 +20,12 @@ Usage
 
     export KAFKA_TOOLS_ZOOKEEPER="your.zookeeper.address/path-to-kafka"
 
+for ssl connections:
+
+    export KAFKA_TOOLS_SSL=true
+    # or a JSON object with tls broker sockets options
+    export KAFKA_TOOLS_SSL='{"rejectUnauthorized":false}'
+
 ### List brokers and topics
 
     kafka-topics
