@@ -46,6 +46,11 @@ Usage
 
     kafka-topics -c
 
+*NOTE*: The configuration overrides are supported by kafka 0.8.1 and later.
+The configuration overrides notification payload changed since kafka 0.9.0.
+`kafka-topics` checks brokers version stored in the zookeeper and if brokers version is >= 2
+the enhanced notification payload is being send.
+
 ### Set topic configuration override
 
     kafka-topics topic-name -c retention.bytes=1000000000 retention.ms=86400000

@@ -43,6 +43,8 @@ var client = new kafka.Client(connectionString, clientId, clientOptions);
 
 var args = process.argv.slice(2);
 
+var brokerVersion;
+
 console.log('Kafka: ' + connectionString.green);
 
 function showVersionAndExit() {
@@ -61,10 +63,10 @@ function showUsageAndExit() {
     "               lists topics",
     "",
     "  kafka-topics topic-name group-id",
-    "               lists topic partition offsets and group offsets",
+    "               lists topic partition offsets and zookeeper group offsets",
     "",
     "  kafka-topics topic-name group-id offset [offset2 ...]",
-    "               offset - sets offset to (boundaries are checked)",
+    "               offset - sets offset to zookeeper group (boundaries are checked)",
     "               multiple offsets will be cycled for each partition in topic",
     "",
     "  kafka-topics --create topic-name p<numPartitions> r<numReplicas> \\",
@@ -88,6 +90,18 @@ function showUsageAndExit() {
     "important".red + ": " + "do not write messages or modify topic configuration override while the topic is being cleared".underline
   ].join(os.EOL));
   process.exit();
+}
+
+function validateBrokers(brokers) {
+  Object.keys(brokers).forEach(function(no) {
+    var brokerInfo = brokers[no];
+    if (brokerVersion === undefined) {
+      brokerVersion = brokerInfo.version;
+    }
+    else if (brokerVersion !== brokerInfo.version) {
+      throw new Error("broker metadata version mismatch: " + brokerVersion + " <> " + brokerInfo.version);
+    }
+  });
 }
 
 function showBrokersAndExit() {
@@ -170,8 +184,14 @@ function getPartitions(topic, callback) {
   client.refreshMetadata([topic], function(err) {
     if (err) {
       callback(err);
-    } else
+    } else {
+      try {
+        validateBrokers(client.brokerMetadata);
+      } catch(err) {
+        return callback(err);
+      }
       callback(null, client.topicPartitions[topic]);
+    }
   });
 }
 
@@ -350,6 +370,11 @@ function setGroupId(topic, offset, setTo, partitions, groupId, mins, maxs, curs)
 
 }
 
+function changeTopicConfigSafe(topic, config, callback) {
+  var notifyV2 = brokerVersion >= 2;
+  client.zk.changeTopicConfig(topic, config, notifyV2, callback);
+}
+
 function configureTopic(topic, confargs) {
   var configs = parseConfArgs(confargs);
 
@@ -377,7 +402,7 @@ function configureTopic(topic, confargs) {
       }
     }
 
-    client.zk.changeTopicConfig(topic, current, function(err) {
+    changeTopicConfigSafe(topic, current, function(err) {
 
       assert.ifError(err);
 
@@ -400,7 +425,7 @@ function clearTopic(topic, offset) {
 
     process.stdout.write("Clear in progress ..");
 
-    client.zk.changeTopicConfig(topic, current, function(err) {
+    changeTopicConfigSafe(topic, current, function(err) {
       assert.ifError(err);
 
       if (oldRetentionMs) {
@@ -415,7 +440,7 @@ function clearTopic(topic, offset) {
       }
       waitBufferCleared(topic, offset, function() {
         console.log("Done.");
-        client.zk.changeTopicConfig(topic, current, function(err) {
+        changeTopicConfigSafe(topic, current, function(err) {
           assert.ifError(err);
           process.exit();
         });
