@@ -4,8 +4,10 @@ Kafka tools
 Prerequisites
 -------------
 
-    node.js >= 0.12
+    node.js >= v4
     npm
+    kafka: v0.8.1 - v0.10.2
+
 
 Installation
 ------------
@@ -92,7 +94,7 @@ This module is based on [kafka-node](https://www.npmjs.com/package/kafka-node) a
 It simply extends [kafka-node/lib/zookeeper](https://github.com/SOHU-Co/kafka-node/blob/master/lib/zookeeper.js) `Zookeeper` object so it's possible to use it in your own programs:
 
 ```
-  // monkey patches kafka-node's zookeeper module
+  // extends kafka-node's zookeeper module
   var kafka = require('kafka-tools').kafka;
 
   var client = new kafka.Client(connectionString, clientId, clientOptions);
@@ -102,7 +104,10 @@ It simply extends [kafka-node/lib/zookeeper](https://github.com/SOHU-Co/kafka-no
   client.zk.listTopics(callback);
   client.zk.listGroupsPerTopic(topic, callback);
   client.zk.getTopicConfig(topic, callback);
-  client.zk.changeTopicConfig(topic, configs, callback);
+  client.zk.changeTopicConfig2(topic, configs, callback);
+  client.zk.changeTopicConfig(topic, configs[, notifyV2], callback);
+  client.zk.getClientConfig(clientId, callback);
+  client.zk.changeClientIdConfig(clientId, configs, callback);
   client.zk.createTopic(topic, numPartitions, replicationFactor, configs, callback);
   client.zk.deleteTopics(topics, callback);
 ```
